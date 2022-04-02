@@ -10,6 +10,7 @@ import org.json.JSONObject;
 import kz.gov.pki.osgi.layer.annotations.NCALayerClass;
 import kz.gov.pki.osgi.layer.annotations.NCALayerMethod;
 import kz.gov.pki.osgi.layer.exception.CommonException;
+import kz.gov.pki.osgi.layer.exception.CommonFailure;
 import kz.gov.pki.osgi.layer.nlcommons.data.CommonResponse;
 import lombok.NonNull;
 
@@ -21,9 +22,8 @@ import lombok.NonNull;
 
 public final class CommonInvoker {
 
-	private static final String INVOCATION_TARGET_EXCEPTION = "INVOCATION_TARGET_EXCEPTION";
 	private static final String COMMON_JSON_WRAPPING_EXCEPTION_RESPONSE =
-			"{\"success\": false, \"errorCode\": \"COMMON_JSON_WRAPPING_EXCEPTION\"}";
+			"{\"success\": false, \"code\": \"COMMON_JSON_WRAPPING_EXCEPTION\"}";
 	
 	private List<Object> nlClasses;
 
@@ -46,6 +46,10 @@ public final class CommonInvoker {
 	}
 
 	public String invoke(@NonNull String jsonString) {
+	    return invoke(jsonString, "{}");
+	}
+	
+	public String invoke(@NonNull String jsonString, @NonNull String jsonAddInfo) {
 
 		CommonResponse<Object> response;
 		JSONObject obj = new JSONObject(jsonString);
@@ -79,7 +83,7 @@ public final class CommonInvoker {
 			Class<?> nlClass = nlClassObj.getClass();
 			Method[] methodArr = nlClass.getMethods();
 			List<Method> methods = Arrays.asList(methodArr).stream().
-					filter((e) -> e.isAnnotationPresent(NCALayerMethod.class)).
+					filter(e -> e.isAnnotationPresent(NCALayerMethod.class)).
 					collect(Collectors.toList());
 
 			Method method = methods.stream().
@@ -97,10 +101,10 @@ public final class CommonInvoker {
 				if (jsonArgs == null) {
 					throw new IllegalArgumentException(jsonMethod + " demands arguments");
 				}
-				result = method.invoke(nlClassObj, jsonArgs.toString());
+				result = method.invoke(nlClassObj, jsonArgs.toString(), jsonAddInfo);
 			}
 			
-			response = new CommonResponse<>(true);
+			response = CommonResponse.builder().status(true).build();
 			response.setBody(result);
 		} catch (IllegalArgumentException | IllegalAccessException | InvocationTargetException e) {
 			response = buildErrorResponse(e);
@@ -117,24 +121,33 @@ public final class CommonInvoker {
 
 	private CommonResponse<Object> buildErrorResponse(@NonNull Exception e) {
 		
-		CommonResponse<Object> response = new CommonResponse<>(false);
-		
-		if (e instanceof InvocationTargetException) {
+		CommonResponse<Object> response = CommonResponse.builder().build();
+		if (e instanceof CommonException) {
+		    CommonException ce = (CommonException) e;
+		    response.setFailure(ce.getFailure());
+		    Throwable cause = ce.getCause();
+            if (cause != null) {
+                response.setDetails(cause.toString());
+            }
+		} else if (e instanceof InvocationTargetException) {
 			if (e.getCause() instanceof CommonException) {
-				CommonException ce = (CommonException) e.getCause();
-				response.setErrorCode(ce.getErrorCode());
-				response.setMessage(ce.getMessage());
+			    CommonException ce = (CommonException) e.getCause();
+		        response.setFailure(ce.getFailure());
+		        Throwable cause = ce.getCause();
+		        if (cause != null) {
+		            response.setDetails(cause.toString());
+		        }
 			} else {
-				response.setErrorCode(INVOCATION_TARGET_EXCEPTION);
+				response.setFailure(CommonFailure.INVOCATION_ERROR);
 				if (e.getCause() != null) {
-					response.setMessage(e.getCause().toString());
+					response.setDetails(e.getCause().toString());
 				} else {
-					response.setMessage(e.toString());
+					response.setDetails(e.toString());
 				}
 			}
 		} else {
-			response.setErrorCode(CommonException.COMMON_INVOKER_EXCEPTION);
-			response.setMessage(e.getMessage());
+			response.setFailure(CommonFailure.GENERAL_ERROR);
+			response.setDetails(e.toString());
 		}
 
 		return response;
