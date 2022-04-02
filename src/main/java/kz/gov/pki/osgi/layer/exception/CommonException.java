@@ -1,45 +1,22 @@
 package kz.gov.pki.osgi.layer.exception;
 
-public class CommonException extends Exception {
-	
-	private static final long serialVersionUID = -8856272478481113600L;
+import lombok.Getter;
 
-	public static final String COMMON_INVOKER_EXCEPTION = "COMMON_INVOKER_EXCEPTION";
-	
-	private String errorCode = COMMON_INVOKER_EXCEPTION;
+public class CommonException extends RuntimeException {
 
-	public CommonException() {
-		super();
-	}
-	
-	public CommonException(String errorCode) {
-		super();
-		this.errorCode = errorCode;
-	}
-	
-	public CommonException(String errorCode, String message) {
-		super(message);
-		this.errorCode = errorCode;
-	}
+    private static final long serialVersionUID = -8856272478481113600L;
 
-	public CommonException(String errorCode, Throwable cause) {
-		super(cause);
-		this.errorCode = errorCode;
-	}
+    @Getter
+    private final Failure failure;
 
-	public CommonException(String errorCode, String message, Throwable cause) {
-		super(message, cause);
-		this.errorCode = errorCode;
-	}
+    public CommonException(Failure failure) {
+        super(failure.getMessage());
+        this.failure = failure;
+    }
 
-	public CommonException(String errorCode, String message, Throwable cause,
-			boolean enableSuppression, boolean writableStackTrace) {
-		super(message, cause, enableSuppression, writableStackTrace);
-		this.errorCode = errorCode;
-	}
-	
-	public String getErrorCode() {
-		return this.errorCode;
-	}
+    public CommonException(Failure failure, Throwable cause) {
+        super(failure.getMessage(), cause);
+        this.failure = failure;
+    }
 
 }
