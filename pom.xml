@@ -7,7 +7,7 @@
 
 	<groupId>kz.gov.pki.osgi.layer</groupId>
 	<artifactId>nlcommons</artifactId>
-	<version>1.0</version>
+	<version>1.1</version>
 
 	<name>Common classes for NCALayer</name>
 	<url>http://pki.gov.kz</url>
@@ -22,13 +22,13 @@
 		<dependency>
 			<groupId>org.json</groupId>
 			<artifactId>json</artifactId>
-			<version>20160810</version>
+			<version>20220320</version>
 			<scope>provided</scope>
 		</dependency>
 		<dependency>
 			<groupId>org.projectlombok</groupId>
 			<artifactId>lombok</artifactId>
-			<version>1.18.4</version>
+			<version>1.18.22</version>
 			<optional>true</optional>
 			<scope>provided</scope>
 		</dependency>
