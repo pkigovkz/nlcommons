@@ -101,7 +101,11 @@ public final class CommonInvoker {
 				if (jsonArgs == null) {
 					throw new IllegalArgumentException(jsonMethod + " demands arguments");
 				}
-				result = method.invoke(nlClassObj, jsonArgs.toString(), jsonAddInfo);
+				if (method.getParameterCount() == 1) {
+					result = method.invoke(nlClassObj, jsonArgs.toString());
+				} else {
+					result = method.invoke(nlClassObj, jsonArgs.toString(), jsonAddInfo);
+				}
 			}
 			
 			response = CommonResponse.builder().status(true).build();
